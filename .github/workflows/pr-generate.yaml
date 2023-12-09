@@ -1,0 +1,55 @@
+name: Generate pull requests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  collect_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.dirs.outputs.dirs }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: generate versions
+        run: make
+      - name: generate matrix from changed directories
+        id: dirs
+        run: |
+          ## list dirty directories and filter to a list of dirs under ./generated/
+          DIRS=$(git status --porcelain generated/ \
+          | awk -F' ' '{ print $2 }' \
+          | awk -F'/' '{ print $2 }' \
+          | jq -M --raw-input --slurp --compact-output 'split("\n")[:-1]')
+          echo "dirs=${DIRS}" >> ${GITHUB_OUTPUT}
+          cat ${GITHUB_OUTPUT}
+
+  generate-pull-requests:
+    needs: collect_changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.collect_changes.outputs.dirs) }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: generate versions
+        run: make
+      - name: Generate pull request
+        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38
+        with:
+          add-paths: |
+            generated/${{ matrix.dir }}
+          commit-message: Update to ${{ matrix.dir }}
+          committer: GitHub <noreply@github.com>
+          delete-branch: true
+          base: main
+          branch: autogen/${{ github.head_ref }}/${{ matrix.dir }}
+          title: '[Rollout ${{ matrix.dir }}] ${{ github.event.pull_request.title }}'
+          body: |
+            This is automatically generated pull request from ${{ github.event.pull_request.html_url }}
