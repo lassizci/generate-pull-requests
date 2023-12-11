@@ -27,6 +27,7 @@ jobs:
           | awk -F'/' '{ print $2 }' \
           | jq -M --raw-input --slurp --compact-output 'split("\n")[:-1]') 
           echo "dirs=${DIRS}" >> ${GITHUB_OUTPUT}
+          cat ${GITHUB_OUTPUT}
 
   generate-pull-requests:
     needs: collect_changes
