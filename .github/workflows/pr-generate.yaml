@@ -22,11 +22,11 @@ jobs:
         id: dirs
         run: |
           ## list dirty directories and filter to a list of dirs under ./generated/
-          git status --porcelain generated/ \
+          DIRS=$(git status --porcelain generated/ \
           | awk -F' ' '{ print $2 }' \
           | awk -F'/' '{ print $2 }' \
-          | jq -M --raw-input --slurp --compact-output 'split("\n")[:-1]' \
-          >> ${GITHUB_OUTPUT}
+          | jq -M --raw-input --slurp --compact-output 'split("\n")[:-1]') 
+          echo "dirs=${DIRS}" >> ${GITHUB_OUTPUT}
 
   generate-pull-requests:
     needs: collect_changes
