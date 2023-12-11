@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  collect_changes:
+  collect-changes:
     runs-on: ubuntu-latest
     outputs:
       dirs: ${{ steps.dirs.outputs.dirs }}
@@ -30,11 +30,11 @@ jobs:
           cat ${GITHUB_OUTPUT}
 
   generate-pull-requests:
-    needs: collect_changes
+    needs: collect-changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.collect_changes.outputs.dirs) }}
+        dir: ${{ fromJson(needs.collect-changes.outputs.dirs) }}
 
     steps:
       - uses: actions/checkout@v4
